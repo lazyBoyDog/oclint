@@ -1,0 +1,10 @@
+# coding: utf-8
+
+project 'DependencyDetectionDemo.xcodeproj'
+
+platform :ios, '8.0'
+#inhibit_all_warnings!
+
+target :DependencyDetectionDemo do
+    pod 'AFNetworking', '2.6.3'
+end

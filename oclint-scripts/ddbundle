@@ -1,0 +1,39 @@
+#! /usr/bin/env python
+
+import argparse
+import shutil
+import subprocess
+import sys
+import os
+
+from oclintscripts import environment
+from oclintscripts import path
+from oclintscripts import process
+from oclintscripts import version
+
+bundle_root_dir = path.build.bundle_dir
+bundle_bin_dir = os.path.join(bundle_root_dir, 'bin')
+bundle_lib_dir = os.path.join(bundle_root_dir, 'lib')
+bundle_lib_oclint_dir = os.path.join(bundle_lib_dir, 'oclint')
+bundle_include_dir = os.path.join(bundle_root_dir, 'include')
+
+def archive_dir():
+    full_version = version.oclint_version()
+    archive_dir = path.oclint_module_build_dir(full_version)
+    return archive_dir;
+
+def archive_file_name():
+    full_version = version.oclint_version()
+    distribution_name = full_version + '-' + environment.dist_env()
+    archive_file_name = path.oclint_module_build_dir(distribution_name)
+    return archive_file_name + ".tar.gz";
+
+print(archive_dir()+" del...")
+path.rm_f(archive_dir())
+
+print(archive_file_name()+" del...")
+if (os.path.exists(archive_file_name())):
+    os.remove(archive_file_name())
+
+print("#### pack bundling...")    
+process.call('python bundle -archive -release')
