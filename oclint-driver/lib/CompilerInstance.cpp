@@ -52,15 +52,19 @@
 
 #include "oclint/Options.h"
 
+#include "oclint/DDTrace.h"
+#include "oclint/ResultCollector.h"
+
 using namespace oclint;
 
 static clang::FrontendAction *getFrontendAction()
 {
-    if (option::enableClangChecker())
-    {
-        return new clang::ento::AnalysisAction();
-    }
-    return new clang::SyntaxOnlyAction();
+    // if (option::enableClangChecker())
+    // {
+    //     return new clang::ento::AnalysisAction();
+    // }
+    // return new clang::SyntaxOnlyAction();
+    return new dd::DDTraceAction();
 }
 
 void CompilerInstance::start()
@@ -98,6 +102,20 @@ void CompilerInstance::end()
     for (const auto& action : _actions)
     {
         action->EndSourceFile();
+
+        dd::DDTraceAction *theAction = (dd::DDTraceAction *)(action.get());
+        auto violationSet = new ViolationSet();
+        std::vector<dd::DDItem> items;
+        theAction->OutputDDItems(items);
+        for (int i = 0; i < items.size(); ++i)
+        {
+            dd::DDItem item = items[i];
+            Violation violation(nullptr, item.filePath, 0, 0, 0, 0, item.dependency);
+            violationSet->addViolation(violation);
+        }
+
+        ResultCollector *results = ResultCollector::getInstance();
+        results->add(violationSet);    
     }
 
     getDiagnostics().getClient()->finish();

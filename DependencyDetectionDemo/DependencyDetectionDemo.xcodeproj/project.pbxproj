@@ -28,6 +28,8 @@
 		65E8F3101F9743150008ECFA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 65E8F30E1F9743150008ECFA /* Main.storyboard */; };
 		65E8F3121F9743150008ECFA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 65E8F3111F9743150008ECFA /* Assets.xcassets */; };
 		65E8F3151F9743150008ECFA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 65E8F3131F9743150008ECFA /* LaunchScreen.storyboard */; };
+		65E8F3231F977EE70008ECFA /* Person.m in Sources */ = {isa = PBXBuildFile; fileRef = 65E8F3221F977EE70008ECFA /* Person.m */; };
+		65E8F3261F977EF50008ECFA /* Boy.m in Sources */ = {isa = PBXBuildFile; fileRef = 65E8F3251F977EF50008ECFA /* Boy.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +45,10 @@
 		65E8F3111F9743150008ECFA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		65E8F3141F9743150008ECFA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		65E8F3161F9743150008ECFA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		65E8F3211F977EE70008ECFA /* Person.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Person.h; sourceTree = "<group>"; };
+		65E8F3221F977EE70008ECFA /* Person.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Person.m; sourceTree = "<group>"; };
+		65E8F3241F977EF50008ECFA /* Boy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Boy.h; sourceTree = "<group>"; };
+		65E8F3251F977EF50008ECFA /* Boy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Boy.m; sourceTree = "<group>"; };
 		C83B8F97B57E0B34A34590D7 /* Pods-DependencyDetectionDemo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DependencyDetectionDemo.debug.xcconfig"; path = "Pods/Target Support Files/Pods-DependencyDetectionDemo/Pods-DependencyDetectionDemo.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -88,6 +94,10 @@
 				65E8F3131F9743150008ECFA /* LaunchScreen.storyboard */,
 				65E8F3161F9743150008ECFA /* Info.plist */,
 				65E8F3051F9743150008ECFA /* Supporting Files */,
+				65E8F3211F977EE70008ECFA /* Person.h */,
+				65E8F3221F977EE70008ECFA /* Person.m */,
+				65E8F3241F977EF50008ECFA /* Boy.h */,
+				65E8F3251F977EF50008ECFA /* Boy.m */,
 			);
 			path = DependencyDetectionDemo;
 			sourceTree = "<group>";
@@ -235,7 +245,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "source ~/.bash_profile\ncd ${SRCROOT}\nxcodebuild clean\nxcodebuild -workspace DependencyDetectionDemo.xcworkspace -scheme DependencyDetectionDemo -arch x86_64 -sdk iphonesimulator10.3 -configuration Debug | xcpretty -r json-compilation-database -o ${SRCROOT}/oclint/bin/compile_commands.json\ncd ${SRCROOT}\ncd ../build\ncp -rf oclint-0.13 ${SRCROOT}/oclint\ncd ${SRCROOT}/oclint/bin\n./oclint-json-compilation-database -e Pods -- -o report.html  -report-type html -rc=LONG_LINE=200 -rc=NCSS_METHOD=100";
+			shellScript = "source ~/.bash_profile\n\ncd ${SRCROOT}\nxcodebuild clean -target DependencyDetectionDemo\nxcodebuild clean -target DDD\n\nrm -rf ${SRCROOT}/oclint\ncd ${SRCROOT}\ncd ../build\ncp -rf oclint-0.13 ${SRCROOT}/oclint\ncd ${SRCROOT}\n\nxcodebuild -workspace DependencyDetectionDemo.xcworkspace -scheme DependencyDetectionDemo -arch x86_64 -sdk iphonesimulator10.3 -configuration Debug | xcpretty -r json-compilation-database -o ${SRCROOT}/oclint/bin/compile_commands.json\ncd ${SRCROOT}/oclint/bin\n./oclint-json-compilation-database -e Pods -- -o report.html  -report-type dd\nopen ./report.html";
 		};
 		B647EEF9C2429C8B85935C7D /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -261,6 +271,8 @@
 			files = (
 				65E8F30D1F9743150008ECFA /* ViewController.m in Sources */,
 				65E8F30A1F9743150008ECFA /* AppDelegate.m in Sources */,
+				65E8F3261F977EF50008ECFA /* Boy.m in Sources */,
+				65E8F3231F977EE70008ECFA /* Person.m in Sources */,
 				65E8F3071F9743150008ECFA /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

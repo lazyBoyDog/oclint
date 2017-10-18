@@ -9,4 +9,5 @@ ADD_LIBRARY(OCLintDriver
     Options.cpp
     RulesetBasedAnalyzer.cpp
     RulesetFilter.cpp
+    DDMacroTracker.cpp
     )
