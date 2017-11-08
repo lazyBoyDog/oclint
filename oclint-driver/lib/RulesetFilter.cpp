@@ -1,6 +1,8 @@
 #include "oclint/RulesetFilter.h"
-
 #include "oclint/RuleSet.h"
+#include "oclint/Options.h"
+
+#include "oclint/Logger.h"
 
 using namespace oclint;
 
@@ -32,7 +34,12 @@ void RulesetFilter::disableRule(const std::string &ruleName)
 std::vector<RuleBase *> RulesetFilter::filteredRules() const
 {
     std::vector<RuleBase *> filteredRules;
-
+    
+    if (option::disableUseRules()) {
+        LOG_VERBOSE(" come here---disableUseRules");
+        return filteredRules;
+    }
+    
     for (int ruleIdx = 0, numRules = oclint::RuleSet::numberOfRules();
         ruleIdx < numRules; ruleIdx++)
     {

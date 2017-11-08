@@ -34,6 +34,7 @@ namespace option
     bool allowDuplicatedViolations();
     bool disableAnalytics();
     bool enableVerbose();
+    bool disableUseRules();
 } // end namespace option
 } // end namespace oclint
 

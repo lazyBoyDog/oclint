@@ -101,6 +101,11 @@ static llvm::cl::opt<bool> argEnableVerbose("verbose",
     llvm::cl::Hidden,
     llvm::cl::cat(OCLintOptionCategory));
 
+static llvm::cl::opt<bool> argDisableUseRules("disable-use-rules",
+    llvm::cl::desc("disable use rules"),
+    llvm::cl::init(false),
+    llvm::cl::cat(OCLintOptionCategory));
+
 /* -------------
    libTooling cl
    ------------- */
@@ -341,4 +346,8 @@ bool oclint::option::disableAnalytics()
 bool oclint::option::enableVerbose()
 {
     return argEnableVerbose;
+}
+bool oclint::option::disableUseRules()
+{
+    return argDisableUseRules;
 }
