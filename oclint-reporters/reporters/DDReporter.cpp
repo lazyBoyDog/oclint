@@ -1,5 +1,5 @@
 #include <ctime>
-
+#include <iostream>
 #include "oclint/Results.h"
 #include "oclint/Reporter.h"
 #include "oclint/RuleBase.h"
@@ -22,12 +22,12 @@ public:
         out << "<html>";
         writeHead(out);
         out << "<body>";
-        out << "<h1>Dependency Detection Report</h1>";
+        out << "<h1>Unuse Import Detection Report</h1>";
         out << "<hr />";
         // out << "<h2>Summary</h2>";
         // writeSummaryTable(out, *results);
         out << "<hr />";
-        out << "<table><thead><tr><th>File</th><th>Message</th></tr></thead><tbody>";
+        out << "<table><thead><tr><th>File</th><th>unuse-import</th></tr></thead><tbody>";
         for (const auto& violation : results->allViolations())
         {
             if (violation.rule)
@@ -53,8 +53,18 @@ public:
 
     void writeViolation(std::ostream &out, const Violation &violation)
     {
+        std::string import = violation.message;
+        int pos = import.find("<");
+        if (pos < import.length()) {
+            import.replace(pos, 1, "&lt;");
+        }
+        pos = import.find(">");
+        if (pos < import.length()) {
+            import.replace(pos, 1, "&gt;");
+        }
+    
         out << "<tr><td>" << violation.path << "</td>" 
-            << "<td>" << violation.message << "</td></tr>";
+            << "<td>" << import << "</td></tr>";
     }
 
     void writeCompilerErrorOrWarning(std::ostream &out,

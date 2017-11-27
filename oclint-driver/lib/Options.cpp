@@ -32,6 +32,11 @@ static llvm::cl::opt<std::string> argOutput("o",
 /* --------------------
    oclint configuration
    -------------------- */
+static llvm::cl::opt<std::string> argfuzzyQuery("fuzzy-query",
+    llvm::cl::desc("Write fuzzy query"),
+    llvm::cl::value_desc("query"),
+    llvm::cl::init("-"),
+    llvm::cl::cat(OCLintOptionCategory));
 
 static llvm::cl::opt<std::string> argReportType("report-type",
     llvm::cl::desc("Change output report type"),
@@ -103,6 +108,11 @@ static llvm::cl::opt<bool> argEnableVerbose("verbose",
 
 static llvm::cl::opt<bool> argDisableUseRules("disable-use-rules",
     llvm::cl::desc("disable use rules"),
+    llvm::cl::init(false),
+    llvm::cl::cat(OCLintOptionCategory));
+
+static llvm::cl::opt<bool> argCheckUnuseImports("check-unuse-imports",
+    llvm::cl::desc("check unuse imports"),
     llvm::cl::init(false),
     llvm::cl::cat(OCLintOptionCategory));
 
@@ -298,6 +308,11 @@ std::string oclint::option::reportType()
     return argReportType;
 }
 
+std::string oclint::option::fuzzyQuery()
+{
+    return argfuzzyQuery;
+}
+
 const oclint::RulesetFilter &oclint::option::rulesetFilter()
 {
     return filter;
@@ -351,3 +366,8 @@ bool oclint::option::disableUseRules()
 {
     return argDisableUseRules;
 }
+bool oclint::option::checkUnUseImports()
+{
+    return argCheckUnuseImports;
+}
+

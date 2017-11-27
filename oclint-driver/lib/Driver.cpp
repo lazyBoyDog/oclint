@@ -47,7 +47,8 @@
 #include "oclint/Driver.h"
 
 #include <unistd.h>
-
+#include<fstream>
+#include <vector>
 #include <sstream>
 
 #include <llvm/ADT/IntrusiveRefCntPtr.h>
@@ -73,8 +74,22 @@
 #include "oclint/Logger.h"
 #include "oclint/Options.h"
 #include "oclint/ViolationSet.h"
+#include "oclint/ResultCollector.h"
 
 using namespace oclint;
+
+class MyASTConsumer : public clang::ASTConsumer
+{
+public:
+    MyASTConsumer() : clang::ASTConsumer() { }
+    virtual ~MyASTConsumer() { }
+    
+    virtual bool HandleTopLevelDecl( clang::DeclGroupRef d)
+    {
+        return true;
+    }
+};
+
 
 typedef std::vector<std::pair<std::string, clang::tooling::CompileCommand>> CompileCommandPairs;
 
@@ -139,9 +154,25 @@ static void constructCompileCommands(
             llvm::errs() << "Skipping " << filePath << ". Compile command not found.\n";
             continue;
         }
+        if (option::checkUnUseImports()) {
+            
+            if (option::fuzzyQuery() == "-") {
+                for (auto &compileCommand : compileCmdsForFile)
+                {
+                    compileCommands.push_back(std::make_pair(filePath, compileCommand));
+                }
+                
+            } else if (filePath.find(option::fuzzyQuery()) < filePath.length()) {
+                for (auto &compileCommand : compileCmdsForFile)
+                {
+                    compileCommands.push_back(std::make_pair(filePath, compileCommand));
+                }
+            }
+        } else {
         for (auto &compileCommand : compileCmdsForFile)
         {
             compileCommands.push_back(std::make_pair(filePath, compileCommand));
+        }
         }
     }
 }
@@ -296,6 +327,90 @@ static void constructCompilersAndFileManagers(std::vector<oclint::CompilerInstan
     }
 }
 
+static void constructCUICompilersAndFileManagers(std::vector<oclint::CompilerInstance *> &compilers,
+                                              std::vector<clang::FileManager *> &fileManagers,
+                                              CompileCommandPairs &compileCommands,
+                                              std::string &mainExecutable)
+{
+    ResultCollector *results = ResultCollector::getInstance();
+    for (auto &compileCommand : compileCommands)
+    {
+        LOG_VERBOSE("Compiling --");
+        LOG_VERBOSE(compileCommand.first.c_str());
+        LOG_VERBOSE_LINE("");
+        if (chdir(compileCommand.second.Directory.c_str()))
+        {
+            throw oclint::GenericException("Cannot change dictionary into \"" +
+                                           compileCommand.second.Directory + "\", "
+                                           "please make sure the directory exists and you have permission to access!");
+        }
+        
+        auto violationSet = new ViolationSet();
+        std::ifstream file;
+        file.open(compileCommand.first.c_str());
+        std::string str;
+        std::vector<std::string> fileContents;
+        while (getline(file, str)) {
+            fileContents.push_back(str);
+        }
+        file.close();
+        //寻找多余的import
+        std::vector<std::string>::const_iterator it = fileContents.cbegin();
+        std::string importStr("#import");
+        int lineNum = 0;
+        std::vector<std::string> adjustedArguments = adjustArguments(compileCommand.second.CommandLine, compileCommand.first);
+        LOG_VERBOSE_LINE("----startcheck");
+        LOG_VERBOSE_LINE(fileContents.size());
+        while (it != fileContents.cend()) {
+            
+            str = *it;
+            bool startWith = str.compare(0, importStr.size(), importStr) == 0;
+            
+            if (startWith) {
+                fileContents[lineNum] = "//" + str;
+                // 写入文件
+                std::ofstream output_file(compileCommand.first.c_str());
+                std::ostream_iterator<std::string> output_iterator(output_file, "\n");
+                copy(fileContents.begin(), fileContents.end(), output_iterator);
+                output_file.close();
+                fileContents[lineNum] = str;
+                
+                clang::CompilerInvocation *compilerInvocation = newCompilerInvocation(mainExecutable, adjustedArguments, true);
+                clang::FileManager *fileManager = newFileManager();
+                oclint::CompilerInstance *compiler = newCompilerInstance(compilerInvocation,fileManager, true);
+                compiler->start();
+                if (!compiler->getDiagnostics().hasErrorOccurred() && compiler->hasASTContext())
+                {
+                    LOG_VERBOSE_LINE(str + "- not need");
+                    Violation violation(nullptr, compileCommand.first.c_str(), 0, 0, 0, 0, str);
+                    violationSet->addViolation(violation);
+                }
+                else
+                {
+                    LOG_VERBOSE_LINE(str + "- need");
+
+                }
+                compiler->end();
+                compiler->resetAndLeakFileManager();
+                fileManager->clearStatCaches();
+                delete fileManager;
+                delete compiler;
+                delete compilerInvocation;
+            }
+            ++it;
+            ++lineNum;
+        }
+        std::ofstream output_file(compileCommand.first.c_str());
+        std::ostream_iterator<std::string> output_iterator(output_file, "\n");
+        copy(fileContents.begin(), fileContents.end(), output_iterator);
+        output_file.close();
+        
+        ResultCollector *results = ResultCollector::getInstance();
+        results->add(violationSet);
+    }
+    
+}
+
 static void invokeClangStaticAnalyzer(
     CompileCommandPairs &compileCommands,
     std::string &mainExecutable)
@@ -339,6 +454,11 @@ static void invoke(CompileCommandPairs &compileCommands,
 {
     std::vector<oclint::CompilerInstance *> compilers;
     std::vector<clang::FileManager *> fileManagers;
+    
+    if (option::checkUnUseImports()) {
+        constructCUICompilersAndFileManagers(compilers, fileManagers, compileCommands, mainExecutable);
+        return;
+    }
     constructCompilersAndFileManagers(compilers, fileManagers, compileCommands, mainExecutable);
 
     // collect a collection of AST contexts
@@ -391,3 +511,4 @@ void Driver::run(const clang::tooling::CompilationDatabase &compilationDatabase,
         invokeClangStaticAnalyzer(compileCommands, mainExecutable);
     }
 }
+

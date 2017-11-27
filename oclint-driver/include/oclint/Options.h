@@ -24,6 +24,7 @@ namespace option
     bool hasOutputPath();
     std::string outputPath();
     std::string reportType();
+    std::string fuzzyQuery();
     const oclint::RulesetFilter &rulesetFilter();
     int maxP1();
     int maxP2();
@@ -35,6 +36,7 @@ namespace option
     bool disableAnalytics();
     bool enableVerbose();
     bool disableUseRules();
+    bool checkUnUseImports();
 } // end namespace option
 } // end namespace oclint
 

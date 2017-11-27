@@ -55,15 +55,18 @@
 #include "oclint/DDTrace.h"
 #include "oclint/ResultCollector.h"
 
+#include "clang/Parse/ParseAST.h"
+
 using namespace oclint;
 
 static clang::FrontendAction *getFrontendAction()
 {
-    // if (option::enableClangChecker())
-    // {
-    //     return new clang::ento::AnalysisAction();
-    // }
-    // return new clang::SyntaxOnlyAction();
+    if (option::enableClangChecker()){
+        return new clang::ento::AnalysisAction();
+    }
+    if (option::checkUnUseImports()) {
+        return new clang::SyntaxOnlyAction();
+    }
     return new dd::DDTraceAction();
 }
 
@@ -78,9 +81,7 @@ void CompilerInstance::start()
     {
         return;// false;
     }
-
     getTarget().adjust(getLangOpts());
-
     for (const auto& input : getFrontendOpts().Inputs)
     {
         if (hasSourceManager())
@@ -91,6 +92,7 @@ void CompilerInstance::start()
         clang::FrontendAction *frontendAction = getFrontendAction();
         if(frontendAction->BeginSourceFile(*this, input))
         {
+            //ExecuteAction(frontendAction);
             frontendAction->Execute();
             _actions.emplace_back(frontendAction);
         }
@@ -102,20 +104,35 @@ void CompilerInstance::end()
     for (const auto& action : _actions)
     {
         action->EndSourceFile();
-
-        dd::DDTraceAction *theAction = (dd::DDTraceAction *)(action.get());
-        auto violationSet = new ViolationSet();
-        std::vector<dd::DDItem> items;
-        theAction->OutputDDItems(items);
-        for (int i = 0; i < items.size(); ++i)
-        {
-            dd::DDItem item = items[i];
-            Violation violation(nullptr, item.filePath, 0, 0, 0, 0, item.dependency);
-            violationSet->addViolation(violation);
+        
+        if (option::checkUnUseImports() == false) {
+            dd::DDTraceAction *theAction = (dd::DDTraceAction *)(action.get());
+            auto violationSet = new ViolationSet();
+            std::vector<dd::DDItem> items;
+            theAction->OutputDDItems(items);
+            for (int i = 0; i < items.size(); ++i)
+            {
+                dd::DDItem item = items[i];
+                Violation violation(nullptr, item.filePath, 0, 0, 0, 0, item.dependency);
+                violationSet->addViolation(violation);
+            }
+            
+            ResultCollector *results = ResultCollector::getInstance();
+            results->add(violationSet);
         }
-
-        ResultCollector *results = ResultCollector::getInstance();
-        results->add(violationSet);    
+//        dd::DDTraceAction *theAction = (dd::DDTraceAction *)(action.get());
+//        auto violationSet = new ViolationSet();
+//        std::vector<dd::DDItem> items;
+//        theAction->OutputDDItems(items);
+//        for (int i = 0; i < items.size(); ++i)
+//        {
+//            dd::DDItem item = items[i];
+//            Violation violation(nullptr, item.filePath, 0, 0, 0, 0, item.dependency);
+//            violationSet->addViolation(violation);
+//        }
+//
+//        ResultCollector *results = ResultCollector::getInstance();
+//        results->add(violationSet);
     }
 
     getDiagnostics().getClient()->finish();
